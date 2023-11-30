@@ -11,6 +11,7 @@ enum Option: String {
     case byteCount = "-c"
     case lineCount = "-l"
     case wordCount = "-w"
+    case charCount = "-m"
 }
 
 func handleCommandLineArguments() -> (Option?, String?)? {
@@ -45,6 +46,13 @@ func handleCommandLineArguments() -> (Option?, String?)? {
                 return nil
             }
             return (.wordCount, arguments[safe: index])
+        case .charCount:
+            index += 1
+            guard arguments[safe: index] != nil else {
+                FileHandle.standardError.write("Missing argument for -m [path]\n".data(using: .utf8)!)
+                return nil
+            }
+            return (.charCount, arguments[safe: index])
         }
     }
 
@@ -68,6 +76,11 @@ if let option = handleCommandLineArguments() {
             break
         }
         print("\t\(wordCount) \(path)")
+    case .charCount:
+        guard let path = option.1, let charCount = charCount(at: path) else {
+            break
+        }
+        print("\t\(charCount) \(path)")
     case .none:
         break
     }
@@ -108,6 +121,19 @@ func wordCount(at path: String) -> Int? {
         let stringFileContent = try String(contentsOf: fileURL, encoding: .utf8)
 
         return stringFileContent.split { $0.isWhitespace }.count
+    } catch {
+        FileHandle.standardError.write("Error: \(error)\n".data(using: .utf8)!)
+
+        return nil
+    }
+}
+
+func charCount(at path: String) -> Int? {
+    do {
+        let fileURL = URL(fileURLWithPath: path)
+        let stringFileContent = try String(contentsOf: fileURL, encoding: .utf8)
+
+        return stringFileContent.count
     } catch {
         FileHandle.standardError.write("Error: \(error)\n".data(using: .utf8)!)
 
