@@ -17,18 +17,18 @@ func handleCommandLineArguments() -> (Option?, String?)? {
     var index = 1
     while index < arguments.count {
         guard let option = Option(rawValue: arguments[index]) else {
-            print("Unknown option: \(arguments[index])")
+            FileHandle.standardError.write("Unknown option: \(arguments[index])\n".data(using: .utf8)!)
             return nil
         }
 
         switch option {
         case .byteCount:
             index += 1
-            guard let argument = arguments[safe: index] else {
-                print("Missing argument for -c [path]")
+            guard arguments[safe: index] != nil else {
+                FileHandle.standardError.write("Missing argument for -c [path]\n".data(using: .utf8)!)
                 return nil
             }
-            return (.byteCount, argument)
+            return (.byteCount, arguments[safe: index])
         }
     }
 
@@ -36,7 +36,30 @@ func handleCommandLineArguments() -> (Option?, String?)? {
 }
 
 if let option = handleCommandLineArguments() {
-    print(option)
+    switch option.0 {
+    case .byteCount:
+        guard let path = option.1, let fileSize = fileSize(at: path) else {
+            break
+        }
+        print("\(fileSize) \(path)")
+    case .none:
+        break
+    }
+}
+
+func fileSize(at path: String) -> UInt64? {
+    do {
+        let attributes = try FileManager.default.attributesOfItem(atPath: path)
+        if let fileSize = attributes[FileAttributeKey.size] as? UInt64 {
+            return fileSize
+        } else {
+            FileHandle.standardError.write("Failed to retrieve file size.\n".data(using: .utf8)!)
+            return nil
+        }
+    } catch {
+        FileHandle.standardError.write("Error: \(error)\n".data(using: .utf8)!)
+        return nil
+    }
 }
 
 extension Collection {

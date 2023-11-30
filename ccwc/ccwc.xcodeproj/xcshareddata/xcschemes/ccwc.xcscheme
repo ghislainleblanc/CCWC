@@ -52,7 +52,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-c test.txt"
+            argument = "-c /Users/ghislainleblanc/Documents/CCWC/test.txt"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
