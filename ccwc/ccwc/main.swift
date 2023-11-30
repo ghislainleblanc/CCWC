@@ -10,6 +10,7 @@ import Foundation
 enum Option: String {
     case byteCount = "-c"
     case lineCount = "-l"
+    case wordCount = "-w"
 }
 
 func handleCommandLineArguments() -> (Option?, String?)? {
@@ -37,6 +38,13 @@ func handleCommandLineArguments() -> (Option?, String?)? {
                 return nil
             }
             return (.lineCount, arguments[safe: index])
+        case .wordCount:
+            index += 1
+            guard arguments[safe: index] != nil else {
+                FileHandle.standardError.write("Missing argument for -w [path]\n".data(using: .utf8)!)
+                return nil
+            }
+            return (.wordCount, arguments[safe: index])
         }
     }
 
@@ -55,6 +63,11 @@ if let option = handleCommandLineArguments() {
             break
         }
         print("\t\(lineCount) \(path)")
+    case .wordCount:
+        guard let path = option.1, let wordCount = wordCount(at: path) else {
+            break
+        }
+        print("\t\(wordCount) \(path)")
     case .none:
         break
     }
@@ -63,6 +76,7 @@ if let option = handleCommandLineArguments() {
 func fileSize(at path: String) -> UInt64? {
     do {
         let attributes = try FileManager.default.attributesOfItem(atPath: path)
+
         if let fileSize = attributes[FileAttributeKey.size] as? UInt64 {
             return fileSize
         } else {
@@ -81,6 +95,19 @@ func lineCount(at path: String) -> Int? {
         let stringFileContent = try String(contentsOf: fileURL, encoding: .utf8)
 
         return stringFileContent.filter { $0 == "\r\n" }.count
+    } catch {
+        FileHandle.standardError.write("Error: \(error)\n".data(using: .utf8)!)
+
+        return nil
+    }
+}
+
+func wordCount(at path: String) -> Int? {
+    do {
+        let fileURL = URL(fileURLWithPath: path)
+        let stringFileContent = try String(contentsOf: fileURL, encoding: .utf8)
+
+        return stringFileContent.split { $0.isWhitespace }.count
     } catch {
         FileHandle.standardError.write("Error: \(error)\n".data(using: .utf8)!)
 
