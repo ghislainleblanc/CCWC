@@ -49,7 +49,7 @@ func handleCommandLineArguments() -> (Option?, String?)? {
         case .charCount:
             index += 1
             guard arguments[safe: index] != nil else {
-                FileHandle.standardError.write("Missing argument for -m [path]\n".data(using: .utf8)!)
+                FileHandle.standardError.write("Missing argument for -c [path]\n".data(using: .utf8)!)
                 return nil
             }
             return (.charCount, arguments[safe: index])
