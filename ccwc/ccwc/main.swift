@@ -11,7 +11,7 @@ enum Option: String {
     case byteCount = "-c"
 }
 
-func handleCommandLineArguments() -> Option? {
+func handleCommandLineArguments() -> (Option?, String?)? {
     let arguments = CommandLine.arguments
 
     var index = 1
@@ -24,7 +24,11 @@ func handleCommandLineArguments() -> Option? {
         switch option {
         case .byteCount:
             index += 1
-            return .byteCount
+            guard let argument = arguments[safe: index] else {
+                print("Missing argument for -c [path]")
+                return nil
+            }
+            return (.byteCount, argument)
         }
     }
 
@@ -32,5 +36,11 @@ func handleCommandLineArguments() -> Option? {
 }
 
 if let option = handleCommandLineArguments() {
-    print("Byte count")
+    print(option)
+}
+
+extension Collection {
+    subscript (safe index: Index) -> Element? {
+        indices.contains(index) ? self[index] : nil
+    }
 }
