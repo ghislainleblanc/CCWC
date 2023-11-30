@@ -9,6 +9,7 @@ import Foundation
 
 enum Option: String {
     case byteCount = "-c"
+    case lineCount = "-l"
 }
 
 func handleCommandLineArguments() -> (Option?, String?)? {
@@ -29,6 +30,13 @@ func handleCommandLineArguments() -> (Option?, String?)? {
                 return nil
             }
             return (.byteCount, arguments[safe: index])
+        case .lineCount:
+            index += 1
+            guard arguments[safe: index] != nil else {
+                FileHandle.standardError.write("Missing argument for -l [path]\n".data(using: .utf8)!)
+                return nil
+            }
+            return (.lineCount, arguments[safe: index])
         }
     }
 
@@ -41,7 +49,12 @@ if let option = handleCommandLineArguments() {
         guard let path = option.1, let fileSize = fileSize(at: path) else {
             break
         }
-        print("\(fileSize) \(path)")
+        print("\t\(fileSize) \(path)")
+    case .lineCount:
+        guard let path = option.1, let lineCount = lineCount(at: path) else {
+            break
+        }
+        print("\t\(lineCount) \(path)")
     case .none:
         break
     }
@@ -58,6 +71,19 @@ func fileSize(at path: String) -> UInt64? {
         }
     } catch {
         FileHandle.standardError.write("Error: \(error)\n".data(using: .utf8)!)
+        return nil
+    }
+}
+
+func lineCount(at path: String) -> Int? {
+    do {
+        let fileURL = URL(fileURLWithPath: path)
+        let stringFileContent = try String(contentsOf: fileURL, encoding: .utf8)
+
+        return stringFileContent.filter { $0 == "\r\n" }.count
+    } catch {
+        FileHandle.standardError.write("Error: \(error)\n".data(using: .utf8)!)
+
         return nil
     }
 }
