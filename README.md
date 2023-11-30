@@ -1,2 +1,2 @@
 # CCWC
-Coding Challenge version of wc, in Swift.
+Coding Challenge version of wc, in Swift
