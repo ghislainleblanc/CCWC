@@ -133,7 +133,7 @@ func charCount(at path: String) -> Int? {
         let fileURL = URL(fileURLWithPath: path)
         let stringFileContent = try String(contentsOf: fileURL, encoding: .utf8)
 
-        return stringFileContent.count
+        return stringFileContent.unicodeScalars.count
     } catch {
         FileHandle.standardError.write("Error: \(error)\n".data(using: .utf8)!)
 
