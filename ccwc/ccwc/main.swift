@@ -26,31 +26,15 @@ func handleCommandLineArguments() -> (Option?, String?)? {
         switch option {
         case .byteCount:
             index += 1
-            guard arguments[safe: index] != nil else {
-                FileHandle.standardError.write("Missing argument for -c [path]\n".data(using: .utf8)!)
-                return nil
-            }
             return (.byteCount, arguments[safe: index])
         case .lineCount:
             index += 1
-            guard arguments[safe: index] != nil else {
-                FileHandle.standardError.write("Missing argument for -l [path]\n".data(using: .utf8)!)
-                return nil
-            }
             return (.lineCount, arguments[safe: index])
         case .wordCount:
             index += 1
-            guard arguments[safe: index] != nil else {
-                FileHandle.standardError.write("Missing argument for -w [path]\n".data(using: .utf8)!)
-                return nil
-            }
             return (.wordCount, arguments[safe: index])
         case .charCount:
             index += 1
-            guard arguments[safe: index] != nil else {
-                FileHandle.standardError.write("Missing argument for -m [path]\n".data(using: .utf8)!)
-                return nil
-            }
             return (.charCount, arguments[safe: index])
         }
     }
@@ -66,20 +50,28 @@ if let option = handleCommandLineArguments() {
         }
         print("\t\(fileSize) \(path)")
     case .lineCount:
-        guard let path = option.1, let string = readFile(at: path), let lineCount = lineCount(from: string) else {
+        guard
+            let string = readFile(at: option.1) ?? readLine(),
+            let lineCount = lineCount(from: string)
+        else {
             break
         }
-        print("\t\(lineCount) \(path)")
+        print("\t\(lineCount) \(option.1 ?? "")")
     case .wordCount:
-        guard let path = option.1, let string = readFile(at: path), let wordCount = wordCount(from: string) else {
+        guard
+            let string = readFile(at: option.1) ?? readLine(),
+            let wordCount = wordCount(from: string)
+        else {
             break
         }
-        print("\t\(wordCount) \(path)")
+        print("\t\(wordCount) \(option.1 ?? "")")
     case .charCount:
-        guard let path = option.1, let string = readFile(at: path), let charCount = charCount(from: string) else {
+        guard
+            let string = readFile(at: option.1) ?? readLine(),
+            let charCount = charCount(from: string) else {
             break
         }
-        print("\t\(charCount) \(path)")
+        print("\t\(charCount) \(option.1 ?? "")")
     case .none:
         guard
             let path = option.1,
@@ -92,9 +84,20 @@ if let option = handleCommandLineArguments() {
         }
         print("\t\(lineCount)\t\(wordCount)\t\(fileSize) \(path)")
     }
+} else {
+    guard
+        let string = readLine(),
+        let lineCount = lineCount(from: string),
+        let wordCount = wordCount(from: string),
+        let charCount = charCount(from: string)
+    else {
+        exit(1)
+    }
+    print("\t\(lineCount)\t\(wordCount)\t\(charCount)")
 }
 
-func readFile(at path: String) -> String? {
+func readFile(at path: String?) -> String? {
+    guard let path else { return nil }
     do {
         let fileURL = URL(fileURLWithPath: path)
         let stringFileContent = try String(contentsOf: fileURL, encoding: .utf8)
