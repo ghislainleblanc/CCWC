@@ -48,7 +48,7 @@ func handleCommandLineArguments() -> (Option?, String?)? {
         case .charCount:
             index += 1
             guard arguments[safe: index] != nil else {
-                FileHandle.standardError.write("Missing argument for -c [path]\n".data(using: .utf8)!)
+                FileHandle.standardError.write("Missing argument for -m [path]\n".data(using: .utf8)!)
                 return nil
             }
             return (.charCount, arguments[safe: index])
@@ -66,17 +66,17 @@ if let option = handleCommandLineArguments() {
         }
         print("\t\(fileSize) \(path)")
     case .lineCount:
-        guard let path = option.1, let lineCount = lineCount(at: path) else {
+        guard let path = option.1, let string = readFile(at: path), let lineCount = lineCount(from: string) else {
             break
         }
         print("\t\(lineCount) \(path)")
     case .wordCount:
-        guard let path = option.1, let wordCount = wordCount(at: path) else {
+        guard let path = option.1, let string = readFile(at: path), let wordCount = wordCount(from: string) else {
             break
         }
         print("\t\(wordCount) \(path)")
     case .charCount:
-        guard let path = option.1, let charCount = charCount(at: path) else {
+        guard let path = option.1, let string = readFile(at: path), let charCount = charCount(from: string) else {
             break
         }
         print("\t\(charCount) \(path)")
@@ -84,12 +84,25 @@ if let option = handleCommandLineArguments() {
         guard
             let path = option.1,
             let fileSize = fileSize(at: path),
-            let lineCount = lineCount(at: path),
-            let wordCount = wordCount(at: path)
+            let string = readFile(at: path),
+            let lineCount = lineCount(from: string),
+            let wordCount = wordCount(from: string)
         else {
             break
         }
         print("\t\(lineCount)\t\(wordCount)\t\(fileSize) \(path)")
+    }
+}
+
+func readFile(at path: String) -> String? {
+    do {
+        let fileURL = URL(fileURLWithPath: path)
+        let stringFileContent = try String(contentsOf: fileURL, encoding: .utf8)
+
+        return stringFileContent
+    } catch {
+        FileHandle.standardError.write("Error: \(error)\n".data(using: .utf8)!)
+        return nil
     }
 }
 
@@ -109,43 +122,16 @@ func fileSize(at path: String) -> UInt64? {
     }
 }
 
-func lineCount(at path: String) -> Int? {
-    do {
-        let fileURL = URL(fileURLWithPath: path)
-        let stringFileContent = try String(contentsOf: fileURL, encoding: .utf8)
-
-        return stringFileContent.filter { $0 == "\r\n" }.count
-    } catch {
-        FileHandle.standardError.write("Error: \(error)\n".data(using: .utf8)!)
-
-        return nil
-    }
+func lineCount(from string: String) -> Int? {
+    string.filter { $0 == "\r\n" }.count
 }
 
-func wordCount(at path: String) -> Int? {
-    do {
-        let fileURL = URL(fileURLWithPath: path)
-        let stringFileContent = try String(contentsOf: fileURL, encoding: .utf8)
-
-        return stringFileContent.split { $0.isWhitespace }.count
-    } catch {
-        FileHandle.standardError.write("Error: \(error)\n".data(using: .utf8)!)
-
-        return nil
-    }
+func wordCount(from string: String) -> Int? {
+    string.split { $0.isWhitespace }.count
 }
 
-func charCount(at path: String) -> Int? {
-    do {
-        let fileURL = URL(fileURLWithPath: path)
-        let stringFileContent = try String(contentsOf: fileURL, encoding: .utf8)
-
-        return stringFileContent.unicodeScalars.count
-    } catch {
-        FileHandle.standardError.write("Error: \(error)\n".data(using: .utf8)!)
-
-        return nil
-    }
+func charCount(from string: String) -> Int? {
+    string.unicodeScalars.count
 }
 
 extension Collection {
