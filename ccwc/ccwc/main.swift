@@ -20,8 +20,7 @@ func handleCommandLineArguments() -> (Option?, String?)? {
     var index = 1
     while index < arguments.count {
         guard let option = Option(rawValue: arguments[index]) else {
-            FileHandle.standardError.write("Unknown option: \(arguments[index])\n".data(using: .utf8)!)
-            return nil
+            return (nil, arguments[safe: index])
         }
 
         switch option {
@@ -82,7 +81,15 @@ if let option = handleCommandLineArguments() {
         }
         print("\t\(charCount) \(path)")
     case .none:
-        break
+        guard
+            let path = option.1,
+            let fileSize = fileSize(at: path),
+            let lineCount = lineCount(at: path),
+            let wordCount = wordCount(at: path)
+        else {
+            break
+        }
+        print("\t\(lineCount)\t\(wordCount)\t\(fileSize) \(path)")
     }
 }
 
